@@ -49,14 +49,9 @@ def token_match(susp_segs, src_segs):
 
     return len(susp_tokens.intersection(src_tokens)) / (len(src_tokens) * 1.0)
 
-def compute_distances(susp_fn, src_fn, segment_length=10, overlap=5, dist_func=token_match):
-    susp_path = os.path.join(pan2013_ta_susp_path,
-                             os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-    src_path = os.path.join(pan2013_ta_src_path,
-                            os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-
-    susp_sents = [unicode(sent) for sent in read_parsed_file(susp_path)]
-    src_sents = [unicode(sent) for sent in read_parsed_file(src_path)]
+def compute_distances(susp_doc, src_doc, segment_length=10, overlap=5, dist_func=token_match):
+    susp_sents = [unicode(sent) for sent in susp_doc]
+    src_sents = [unicode(sent) for sent in src_doc]
 
     susp_segs = generate_segs(len(susp_sents), segment_length, overlap)
     src_segs = generate_segs(len(src_sents), segment_length, overlap)
@@ -97,11 +92,8 @@ def match_seg(sentences, offset, length):
 
     return seg_start, seg_len
 
-def get_plagiarized_sents(section, src_fn, susp_fn):
-    plagiarism_fn = os.path.join(pan2013_ta_section_paths[section],
-                                 "%s-%s.xml" % (os.path.splitext(susp_fn)[0], os.path.splitext(src_fn)[0]))
-
-    doc = BeautifulStoneSoup(open(plagiarism_fn).read())
+def get_plagiarized_sents(section, xml_fn, src_doc, susp_doc):
+    doc = BeautifulStoneSoup(open(xml_fn).read())
 
     plag_spans = []
 
@@ -112,13 +104,8 @@ def get_plagiarized_sents(section, src_fn, susp_fn):
 
             plag_spans.append((susp_span, src_span))
 
-    susp_fn = os.path.join(pan2013_ta_susp_path,
-                           os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-    src_fn = os.path.join(pan2013_ta_src_path,
-                          os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-
-    susp_sents = [unicode(sent) for sent in read_parsed_file(susp_fn)]
-    src_sents = [unicode(sent) for sent in read_parsed_file(src_fn)]
+    susp_sents = [unicode(sent) for sent in susp_doc]
+    src_sents = [unicode(sent) for sent in src_doc]
 
     plag_segs = []
 
@@ -183,7 +170,15 @@ if __name__ == '__main__':
     for susp_fn, src_fn in pan2013_ta_pairs[section]:
         print "%s - %s" % (susp_fn, src_fn)
 
-        seg_dists = compute_distances(susp_fn, src_fn, segment_length=seg_len, overlap=overlap,
+        susp_path = os.path.join(pan2013_ta_susp_path,
+                                 os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
+        src_path = os.path.join(pan2013_ta_src_path,
+                                os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
+
+        susp_doc = read_parsed_file(susp_path)
+        src_doc = read_parsed_file(src_path)
+
+        seg_dists = compute_distances(susp_doc, src_doc, segment_length=seg_len, overlap=overlap,
                                       dist_func=token_match)
         detected = detect_segments(seg_dists)
 
@@ -203,7 +198,11 @@ if __name__ == '__main__':
             susp_det += susp
             src_det += src
 
-        plag_segs = get_plagiarized_sents(section, src_fn, susp_fn)
+        plagiarism_fn = os.path.join(pan2013_ta_section_paths[section],
+                                     "%s-%s.xml" % (os.path.splitext(susp_fn)[0], os.path.splitext(src_fn)[0]))
+
+
+        plag_segs = get_plagiarized_sents(section, plagiarism_fn, src_doc, susp_doc)
 
         susp_plag = []
         src_plag = []
