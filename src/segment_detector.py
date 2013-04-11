@@ -8,31 +8,33 @@ from numpy.ma import mean
 from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_pairs, pan2013_ta_section_paths
 import numpy
 from dist_measures import lemma_weighted_word_match
+from sentence import Sentence
 
-SEGMENTED_FILE_SUFFIX = 'seg'
+PARSED_FILE_SUFFIX = 'malt'
 
-
-def remove_sent_tags(line):
-    m = re.search('^<s>(.*)</s>$', line)
-
-    if m:
-        return m.group(1)
-    else:
-        raise ValueError("Failed to parse line \"%s\"" % line)
-
-def read_sentences(path):
+def read_parsed_file(path):
     with codecs.open(path, 'r', 'utf-8') as f:
-        lines = []
+        sentences = []
+        sent = []
 
         for line in f.readlines():
-            try:
-                line = remove_sent_tags(line)
-            except ValueError as e:
-                logging.warn(e.message + " in " + path)
+            line = line.strip()
 
-            lines.append(line)
+            # we only bother to track the end tags
+            if line == '<s>':
+                continue
+            elif line == '</s>':
+                if sent:
+                    sentences.append(Sentence(sent))
+                    sent =[]
+            else:
+                _, _, word, lemma, pos, _, _, _ = line.split("\t")
+                sent.append((word, lemma, pos))
 
-        return lines
+        if sent:
+            sentences.append(Sentence(sent))
+
+        return sentences
 
 
 def generate_segs(size, segment_length, overlap):
@@ -40,7 +42,6 @@ def generate_segs(size, segment_length, overlap):
     end = [min(x + segment_length, size) for x in start]
 
     return zip(start, end)
-
 
 def token_match(susp_segs, src_segs):
     susp_tokens = set(" ".join(susp_segs).split())
@@ -50,12 +51,12 @@ def token_match(susp_segs, src_segs):
 
 def compute_distances(susp_fn, src_fn, segment_length=10, overlap=5, dist_func=token_match):
     susp_path = os.path.join(pan2013_ta_susp_path,
-                             os.path.splitext(susp_fn)[0] + os.path.extsep + SEGMENTED_FILE_SUFFIX)
+                             os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
     src_path = os.path.join(pan2013_ta_src_path,
-                            os.path.splitext(src_fn)[0] + os.path.extsep + SEGMENTED_FILE_SUFFIX)
+                            os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
 
-    susp_sents = read_sentences(susp_path)
-    src_sents = read_sentences(src_path)
+    susp_sents = [unicode(sent) for sent in read_parsed_file(susp_path)]
+    src_sents = [unicode(sent) for sent in read_parsed_file(src_path)]
 
     susp_segs = generate_segs(len(susp_sents), segment_length, overlap)
     src_segs = generate_segs(len(src_sents), segment_length, overlap)
@@ -111,10 +112,13 @@ def get_plagiarized_sents(section, src_fn, susp_fn):
 
             plag_spans.append((susp_span, src_span))
 
-    susp_sents = read_sentences(os.path.join(pan2013_ta_susp_path,
-                                             os.path.splitext(susp_fn)[0] + os.path.extsep + SEGMENTED_FILE_SUFFIX))
-    src_sents = read_sentences(os.path.join(pan2013_ta_src_path,
-                                            os.path.splitext(src_fn)[0] + os.path.extsep + SEGMENTED_FILE_SUFFIX))
+    susp_fn = os.path.join(pan2013_ta_susp_path,
+                           os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
+    src_fn = os.path.join(pan2013_ta_src_path,
+                          os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
+
+    susp_sents = [unicode(sent) for sent in read_parsed_file(susp_fn)]
+    src_sents = [unicode(sent) for sent in read_parsed_file(src_fn)]
 
     plag_segs = []
 
