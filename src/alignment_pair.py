@@ -3,6 +3,7 @@ from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_p
 
 PARSED_FILE_SUFFIX = 'malt'
 
+# a generator of alignment pair instances from a pairs file
 def alignment_pairs(pair_fn, section=None):
     with open(pair_fn) as f:
         while True:
@@ -15,6 +16,8 @@ def alignment_pairs(pair_fn, section=None):
 
             yield AlignmentPair(susp_fn, src_fn, section=section)
 
+# keep tracks of filenames and other info for a pair of siource/suspicious
+# files that are being analyzed
 class AlignmentPair:
     def __init__(self, susp_fn, src_fn, section=None):
         self.susp_fn = susp_fn

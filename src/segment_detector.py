@@ -10,6 +10,8 @@ import numpy
 from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, pan2013_ta_pair_fns
 from sentence import Sentence
 from alignment_pair import alignment_pairs
+from tools import flatten
+
 
 def read_parsed_file(path):
     with codecs.open(path, 'r', 'utf-8') as f:
@@ -35,31 +37,37 @@ def read_parsed_file(path):
 
         return sentences
 
+def generate_segs(size, segment_length, spacing):
+    """ Generate segment windows for a document.
 
-def generate_segs(size, segment_length, overlap):
-    start = range(0, size, overlap)
+    :param size: Number of sentences in the document
+    :param segment_length: Length of segments to generate
+    :param spacing: Number of sentences between each segment
+    :return: List of segments, each segment is tuple with the start and (not inclusive)
+        end index in the document.
+    """
+    start = range(0, size, spacing)
     end = [min(x + segment_length, size) for x in start]
 
     return zip(start, end)
 
-def token_match(susp_segs, src_segs):
-    susp_tokens = set(" ".join(susp_segs).split())
-    src_tokens = set(" ".join(src_segs).split())
+# simple text distance
+# ratio of token types in source document shared with the suspicicious document
+def token_match(susp_sents, src_sents):
+    susp_tokens = set(flatten([sent.words() for sent in susp_sents]))
+    src_tokens = set(flatten([sent.words() for sent in src_sents]))
 
     return len(susp_tokens.intersection(src_tokens)) / (len(src_tokens) * 1.0)
 
 def compute_distances(susp_doc, src_doc, segment_length=10, overlap=5, dist_func=token_match):
-    susp_sents = [unicode(sent) for sent in susp_doc]
-    src_sents = [unicode(sent) for sent in src_doc]
-
-    susp_segs = generate_segs(len(susp_sents), segment_length, overlap)
-    src_segs = generate_segs(len(src_sents), segment_length, overlap)
+    susp_segs = generate_segs(len(susp_doc), segment_length, overlap)
+    src_segs = generate_segs(len(src_doc), segment_length, overlap)
 
     dists = numpy.zeros((len(src_segs), len(susp_segs)))
 
     for i, (susp_start, susp_end) in enumerate(susp_segs):
         for j, (src_start, src_end) in enumerate(src_segs):
-            dists[j, i] = apply(dist_func, [susp_sents[susp_start:susp_end], src_sents[src_start:src_end]])
+            dists[j, i] = apply(dist_func, [susp_doc[susp_start:susp_end], src_doc[src_start:src_end]])
 
     return dists
 
@@ -91,8 +99,8 @@ def match_seg(sentences, offset, length):
 
     return seg_start, seg_len
 
-def get_plagiarized_sents(section, xml_fn, src_doc, susp_doc):
-    doc = BeautifulStoneSoup(open(xml_fn).read())
+def get_plagiarized_sents(alignment_pair, src_doc, susp_doc):
+    doc = BeautifulStoneSoup(open(alignment_pair.plagiarism_xml_fn()).read())
 
     plag_spans = []
 
@@ -103,14 +111,11 @@ def get_plagiarized_sents(section, xml_fn, src_doc, susp_doc):
 
             plag_spans.append((susp_span, src_span))
 
-    susp_sents = [unicode(sent) for sent in susp_doc]
-    src_sents = [unicode(sent) for sent in src_doc]
-
     plag_segs = []
 
     for (susp_offset, susp_len), (src_offset, src_len) in plag_spans:
-        susp_seg = match_seg(susp_sents, susp_offset, susp_len)
-        src_seg = match_seg(src_sents, src_offset, src_len)
+        susp_seg = match_seg(susp_doc, susp_offset, susp_len)
+        src_seg = match_seg(src_doc, src_offset, src_len)
 
         plag_segs.append((susp_seg, src_seg))
 
@@ -194,7 +199,7 @@ if __name__ == '__main__':
             susp_det += susp
             src_det += src
 
-        plag_segs = get_plagiarized_sents(section, pair.plagiarism_xml_fn(), src_doc, susp_doc)
+        plag_segs = get_plagiarized_sents(pair, src_doc, susp_doc)
 
         susp_plag = []
         src_plag = []
