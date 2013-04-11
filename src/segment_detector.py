@@ -1,13 +1,12 @@
 import codecs
 import logging
 from operator import itemgetter
-import os
 
 from BeautifulSoup import BeautifulStoneSoup
 from numpy.ma import mean
 import numpy
 
-from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, pan2013_ta_pair_fns
+from data import pan2013_ta_pair_fns
 from sentence import Sentence
 from alignment_pair import alignment_pairs
 from tools import flatten

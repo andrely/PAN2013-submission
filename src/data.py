@@ -1,4 +1,6 @@
 import os
+from config import get_config
+
 
 def read_pairs_file(fn):
     pairs = []
@@ -11,7 +13,7 @@ def read_pairs_file(fn):
 
     return pairs
 
-pan2013_ta_path = "/Users/stinky/Work/PAN2013/Text Alignment/pan2013-detailed-comparison-training-corpus"
+pan2013_ta_path = get_config('data_path')
 pan2013_ta_susp_path = os.path.join(pan2013_ta_path, 'susp')
 pan2013_ta_src_path = os.path.join(pan2013_ta_path, 'src')
 
