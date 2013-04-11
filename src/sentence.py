@@ -1,3 +1,7 @@
+# holds sentences
+# each token should be a tuble with:
+# (word, lemma, pos)
+
 class Sentence:
     def __init__(self, parsed_tokens):
         self.parsed_tokens = parsed_tokens
