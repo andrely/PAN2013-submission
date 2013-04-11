@@ -2,15 +2,14 @@ import codecs
 import logging
 from operator import itemgetter
 import os
-import re
+
 from BeautifulSoup import BeautifulStoneSoup
 from numpy.ma import mean
-from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_pairs, pan2013_ta_section_paths
 import numpy
-from dist_measures import lemma_weighted_word_match
-from sentence import Sentence
 
-PARSED_FILE_SUFFIX = 'malt'
+from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, pan2013_ta_pair_fns
+from sentence import Sentence
+from alignment_pair import alignment_pairs
 
 def read_parsed_file(path):
     with codecs.open(path, 'r', 'utf-8') as f:
@@ -158,6 +157,8 @@ def score(true_vals, pred_vals):
     return prec, rec, f
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     section = 'no-obfuscation'
 
     src_scores = []
@@ -167,16 +168,11 @@ if __name__ == '__main__':
     overlap = 5
     seg_len = 10
 
-    for susp_fn, src_fn in pan2013_ta_pairs[section]:
-        print "%s - %s" % (susp_fn, src_fn)
+    for pair in alignment_pairs(pan2013_ta_pair_fns[section], section):
+        logging.info(str(pair))
 
-        susp_path = os.path.join(pan2013_ta_susp_path,
-                                 os.path.splitext(susp_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-        src_path = os.path.join(pan2013_ta_src_path,
-                                os.path.splitext(src_fn)[0] + os.path.extsep + PARSED_FILE_SUFFIX)
-
-        susp_doc = read_parsed_file(susp_path)
-        src_doc = read_parsed_file(src_path)
+        susp_doc = read_parsed_file(pair.susp_parsed_fn())
+        src_doc = read_parsed_file(pair.src_parsed_fn())
 
         seg_dists = compute_distances(susp_doc, src_doc, segment_length=seg_len, overlap=overlap,
                                       dist_func=token_match)
@@ -198,11 +194,7 @@ if __name__ == '__main__':
             susp_det += susp
             src_det += src
 
-        plagiarism_fn = os.path.join(pan2013_ta_section_paths[section],
-                                     "%s-%s.xml" % (os.path.splitext(susp_fn)[0], os.path.splitext(src_fn)[0]))
-
-
-        plag_segs = get_plagiarized_sents(section, plagiarism_fn, src_doc, susp_doc)
+        plag_segs = get_plagiarized_sents(section, pair.plagiarism_xml_fn(), src_doc, susp_doc)
 
         susp_plag = []
         src_plag = []
@@ -213,13 +205,13 @@ if __name__ == '__main__':
 
         susp_score = score(susp_plag, susp_det)
         susp_scores.append(susp_score)
-        print "Suspicious p: %.2f r: %.2f f: %.2f segments %d/%d" % (susp_score[0], susp_score[1], susp_score[2],
-                                                                     detected_susp_count, detected_count)
+        logging.info("Suspicious p: %.2f r: %.2f f: %.2f segments %d/%d" % (susp_score[0], susp_score[1], susp_score[2],
+                                                                            detected_susp_count, detected_count))
 
         src_score = score(src_plag, src_det)
         src_scores.append(src_score)
-        print "Source     p: %.2f r: %.2f f: %.2f segments %d/%d" % (src_score[0], src_score[1], src_score[2],
-                                                                     detected_src_count, detected_count)
+        logging.info("Source     p: %.2f r: %.2f f: %.2f segments %d/%d" % (src_score[0], src_score[1], src_score[2],
+                                                                            detected_src_count, detected_count))
 
     print "Overall suspicious: p: %.2f, r: %.2f, f: %.2f" % (mean(map(itemgetter(0), susp_scores)),
                                                              mean(map(itemgetter(1), susp_scores)),

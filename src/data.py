@@ -27,6 +27,11 @@ pan2013_ta_section_paths = dict(zip(pan2013_ta_sections,
                                     [os.path.join(pan2013_ta_path,  "%02d-%s" % section)
                                      for section in enumerate(pan2013_ta_sections, start=1)]))
 
+pan2013_ta_pair_fns = dict(zip(pan2013_ta_sections,
+                               [os.path.join(pan2013_ta_section_paths[section], 'pairs')
+                                for section in pan2013_ta_sections]))
+
+
 pan2013_ta_pairs = dict(zip(pan2013_ta_sections,
                             [read_pairs_file(os.path.join(pan2013_ta_section_paths[section], 'pairs'))
                              for section in pan2013_ta_sections]))
