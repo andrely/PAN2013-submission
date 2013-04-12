@@ -1,5 +1,7 @@
+import codecs
 import os
 from config import get_config
+from sentence import Sentence
 
 
 def read_pairs_file(fn):
@@ -37,3 +39,28 @@ pan2013_ta_pair_fns = dict(zip(pan2013_ta_sections,
 pan2013_ta_pairs = dict(zip(pan2013_ta_sections,
                             [read_pairs_file(os.path.join(pan2013_ta_section_paths[section], 'pairs'))
                              for section in pan2013_ta_sections]))
+
+
+def read_parsed_file(path):
+    with codecs.open(path, 'r', 'utf-8') as f:
+        sentences = []
+        sent = []
+
+        for line in f.readlines():
+            line = line.strip()
+
+            # we only bother to track the end tags
+            if line == '<s>':
+                continue
+            elif line == '</s>':
+                if sent:
+                    sentences.append(Sentence(sent))
+                    sent =[]
+            else:
+                _, _, word, lemma, pos, _, _, _ = line.split("\t")
+                sent.append((word, lemma, pos))
+
+        if sent:
+            sentences.append(Sentence(sent))
+
+        return sentences

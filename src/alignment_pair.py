@@ -1,5 +1,5 @@
 import os
-from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths
+from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, read_parsed_file
 
 PARSED_FILE_SUFFIX = 'malt'
 
@@ -23,6 +23,9 @@ class AlignmentPair:
         self.susp_fn = susp_fn
         self.src_fn = src_fn
         self.section = section
+
+        self.src_doc = read_parsed_file(self.src_parsed_fn())
+        self.susp_doc = read_parsed_file(self.susp_parsed_fn())
 
     def __str__(self):
         return "%s - %s" % (self.susp_fn, self.src_fn)
