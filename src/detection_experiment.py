@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
         stats = DetectionStatistics()
 
-        for pair in alignment_pairs(pan2013_ta_pair_fns[section], section):
+        for pair in alignment_pairs(section=section):
             alignments = detect_alignments(pair, statistics=stats)
 
             gold_alignments = read_gold_alignments(pair)

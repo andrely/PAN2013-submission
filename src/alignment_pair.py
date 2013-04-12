@@ -1,10 +1,16 @@
 import os
-from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, read_parsed_file
+from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, read_parsed_file, pan2013_ta_pair_fns
 
 PARSED_FILE_SUFFIX = 'malt'
 
 # a generator of alignment pair instances from a pairs file
-def alignment_pairs(pair_fn, section=None):
+def alignment_pairs(pair_fn = None, section=None):
+    if not pair_fn and not section:
+        raise ValueError
+
+    if not pair_fn:
+        pair_fn = pan2013_ta_pair_fns[section]
+
     with open(pair_fn) as f:
         while True:
             line = f.readline()
