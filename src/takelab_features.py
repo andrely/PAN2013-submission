@@ -139,7 +139,7 @@ def load_wweight_table(path):
 
     return wweight
 
-wweight = load_wweight_table('/Users/stinky/Work/takelab-sts/takelab_sts/word-frequencies.txt')
+wweight = load_wweight_table(os.path.join(data_path, 'word-frequencies.txt'))
 minwweight = min(wweight.values())
 
 def len_compress(l):
