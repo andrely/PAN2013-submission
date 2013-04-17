@@ -85,9 +85,15 @@ def col_names(dist_funcs=all_dists):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     for section in pan2013_ta_sections:
+        logging.info("Generating sample for %s" % section)
+
         df = DataFrame(generate_sample(section=section), columns=col_names())
         fn = section + '_dists.csv'
+
+        logging.info("Writing sample to %s" % fn)
 
         if os.path.exists(fn):
             logging.error("file %s exists" % fn)
