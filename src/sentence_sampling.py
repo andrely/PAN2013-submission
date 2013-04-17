@@ -36,9 +36,12 @@ def sample_sentences(section, n=1000):
     for pair in pair_list[randint(0, high=pair_len, size=n)]:
         gold = pair.gold_alignments()
 
-        susp_draw, src_draw = gold[randint(0, high=len(gold))]
+        if len(gold) > 0:
+            susp_draw, src_draw = gold[randint(0, high=len(gold))]
 
-        plagiarized_sample.append((pair.susp_fn, pair.src_fn, susp_draw, src_draw))
+            plagiarized_sample.append((pair.susp_fn, pair.src_fn, susp_draw, src_draw))
+        else:
+            logging.warn("Empty gold alignment for %s - %s" % (pair.susp_fn, pair.src_fn))
 
     # draw random non-plagiarized sentence pairs
     for pair in pair_list[randint(0, high=pair_len, size=n)]:
