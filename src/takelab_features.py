@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+import os
 from nltk.corpus import wordnet
 import nltk
 from collections import Counter, defaultdict
@@ -38,6 +39,8 @@ import sys
 import re
 import numpy
 from numpy.linalg import norm
+from config import get_config
+
 
 class Sim:
     def __init__(self, words, vectors):
@@ -65,10 +68,12 @@ stopwords = set([
     "have", "has", "had", "were", "'ll"
 ])
 
-nyt_sim = Sim('/Users/stinky/Work/takelab-sts/takelab_sts/nyt_words.txt',
-              '/Users/stinky/Work/takelab-sts/takelab_sts/nyt_word_vectors.txt')
-wiki_sim = Sim('/Users/stinky/Work/takelab-sts/takelab_sts/wikipedia_words.txt',
-               '/Users/stinky/Work/takelab-sts/takelab_sts/wikipedia_word_vectors.txt')
+data_path = get_config('takelab_data_path')
+
+nyt_sim = Sim(os.path.join(data_path, 'nyt_words.txt'),
+              os.path.join(data_path, 'nyt_word_vectors.txt'))
+wiki_sim = Sim(os.path.join(data_path, 'wikipedia_words.txt'),
+               os.path.join(data_path, 'wikipedia_word_vectors.txt'))
 
 def fix_compounds(a, b):
     sb = set(x.lower() for x in b)
