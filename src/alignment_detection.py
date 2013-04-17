@@ -5,8 +5,6 @@ from BeautifulSoup import BeautifulStoneSoup
 from numpy.ma import mean
 import numpy
 
-from data import pan2013_ta_pair_fns, read_parsed_file
-from alignment_pair import alignment_pairs
 from tools import flatten
 
 class DetectionStatistics:
@@ -151,12 +149,12 @@ def score(true_vals, pred_vals):
 
     return prec, rec, f
 
-def detect_alignments(alignment_pair, segment_length=10, overlap=5, statistics=None):
+def detect_alignments(alignment_pair, segment_length=10, overlap=5, statistics=None, dist_func=token_match):
     logging.debug(str(alignment_pair))
 
     seg_dists = compute_distances(alignment_pair.susp_doc, alignment_pair.src_doc,
                                   segment_length=segment_length, overlap=overlap,
-                                  dist_func=token_match)
+                                  dist_func=dist_func)
     detected = detect_segments(seg_dists)
 
     if statistics:

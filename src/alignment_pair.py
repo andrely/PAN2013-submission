@@ -1,4 +1,5 @@
 import os
+from alignment_detection import read_gold_alignments
 from data import pan2013_ta_susp_path, pan2013_ta_src_path, pan2013_ta_section_paths, read_parsed_file, pan2013_ta_pair_fns
 
 PARSED_FILE_SUFFIX = 'malt'
@@ -50,3 +51,6 @@ class AlignmentPair:
         else:
             return os.path.join(pan2013_ta_section_paths[self.section],
                                 "%s-%s.xml" % (os.path.splitext(self.susp_fn)[0], os.path.splitext(self.src_fn)[0]))
+
+    def gold_alignments(self):
+        return read_gold_alignments(self)
